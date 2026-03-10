@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { WORDS } from "../utils/words";
-import { encryptRot13 } from "../utils/caesar-cipher";
 import { Header } from "../components/ui/Header";
+import { encryptGameData } from "../utils/encryption";
 
 const WORD_LENGTH = 5;
 
@@ -26,9 +26,9 @@ function HomePage() {
       setIsNext(true);
       return;
     }
-    const hashedSolution = encryptRot13(word.toUpperCase()).toLowerCase();
+    const token = encryptGameData(word, name);
     const baseUrl = window.location.href;
-    navigator.clipboard.writeText(`${baseUrl}${hashedSolution}-${name}`);
+    navigator.clipboard.writeText(`${baseUrl}game?token=${token}`);
     setIsCopied(true);
   }
 

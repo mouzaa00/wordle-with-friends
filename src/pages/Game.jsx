@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { decryptRot13 } from "../utils/caesar-cipher";
+import { useSearchParams } from "react-router-dom";
 import { CircleXIcon, DeleteIcon, Share2Icon } from "lucide-react";
 import { Header } from "../components/ui/Header";
 import { WORDS } from "../utils/words";
+import { decryptGameData } from "../utils/encryption";
 
 const WORD_LENGTH = 5;
 const backspace = <DeleteIcon data-role="backspace" />;
@@ -11,7 +11,7 @@ const ROW1 = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"];
 const ROW2 = ["a", "s", "d", "f", "g", "h", "j", "k", "l"];
 const ROW3 = ["Enter", "z", "x", "c", "v", "b", "n", "m", backspace];
 
-function Modal({ name, solution, setIsModelOpen, guess }) {
+function Modal({ creator, solution, setIsModelOpen, guess }) {
   return (
     <div className="z-10 inset-0 overflow-y-auto absolute top-32 flex justify-center items-start">
       <div className="text-white space-y-8 text-center relative bg-[#121213] rounded-lg p-6 overflow-hidden shadow-xl transform transition-all sm:align-middle sm:max-w-sm sm:w-full">
@@ -31,7 +31,7 @@ function Modal({ name, solution, setIsModelOpen, guess }) {
           </h3>
         )}
         <div>
-          {name.charAt(0).toUpperCase() + name.slice(1)}&apos;s word was{" "}
+          {creator.charAt(0).toUpperCase() + creator.slice(1)}&apos;s word was{" "}
           {solution.toUpperCase()}.
         </div>
         <button
@@ -81,7 +81,7 @@ function Row({ guess, isGuessEntered, solution }) {
     tiles.push(
       <div key={i} className={className}>
         {char}
-      </div>
+      </div>,
     );
   }
 
@@ -334,9 +334,10 @@ function GamePage() {
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const { details } = useParams();
-  const [hashedSolution, name] = details.split("-");
-  const solution = decryptRot13(hashedSolution.toUpperCase()).toLowerCase();
+
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const { word, creator } = decryptGameData(token);
 
   useEffect(() => {
     function handleType(event) {
@@ -355,7 +356,7 @@ function GamePage() {
         const newGuesses = guesses;
         newGuesses[guesses.findIndex((val) => val == null)] = currentGuess;
         setGuesses(newGuesses);
-        if (currentGuess === solution) {
+        if (currentGuess === word) {
           setIsGameOver(true);
           setIsModelOpen(true);
           setCurrentGuess("");
@@ -384,7 +385,7 @@ function GamePage() {
     window.addEventListener("keydown", handleType);
 
     return () => window.removeEventListener("keydown", handleType);
-  }, [currentGuess, guesses, isGameOver, solution]);
+  }, [currentGuess, guesses, isGameOver, word]);
 
   return (
     <>
@@ -392,7 +393,7 @@ function GamePage() {
       <main className="px-2 py-4">
         <p className="text-sm text-center">
           You have 6 tries to guess{" "}
-          {name.charAt(0).toUpperCase() + name.slice(1)}
+          {creator.charAt(0).toUpperCase() + creator.slice(1)}
           &apos;s 5 letter word!
         </p>
         <button
@@ -408,17 +409,17 @@ function GamePage() {
             return (
               <Row
                 key={idx}
-                guess={isCurrentGuess ? currentGuess : guess ?? ""}
+                guess={isCurrentGuess ? currentGuess : (guess ?? "")}
                 isGuessEntered={!isCurrentGuess && guess != null}
-                solution={solution}
+                solution={word}
               />
             );
           })}
         </div>
         {isModelOpen && (
           <Modal
-            name={name}
-            solution={solution}
+            creator={creator}
+            solution={word}
             setIsModelOpen={setIsModelOpen}
             guess={guesses[guesses.findIndex((val) => val == null) - 1]}
           />
@@ -430,7 +431,7 @@ function GamePage() {
           setGuesses={setGuesses}
           isGameOver={isGameOver}
           setIsGameOver={setIsGameOver}
-          solution={solution}
+          solution={word}
           setIsPopupOpen={setIsPopupOpen}
           setIsModelOpen={setIsModelOpen}
         />
