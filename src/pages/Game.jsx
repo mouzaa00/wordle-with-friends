@@ -1,65 +1,17 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CircleXIcon, DeleteIcon, Share2Icon } from "lucide-react";
+import { DeleteIcon } from "lucide-react";
 import { Header } from "../components/ui/Header";
 import { WORDS } from "../utils/words";
 import { decryptGameData } from "../utils/encryption";
+import { GameOverModal } from "../components/GameOverModal";
+import { HowToPlayModal } from "../components/HowToPlayModal";
 
 const WORD_LENGTH = 5;
 const backspace = <DeleteIcon data-role="backspace" />;
 const ROW1 = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"];
 const ROW2 = ["a", "s", "d", "f", "g", "h", "j", "k", "l"];
 const ROW3 = ["Enter", "z", "x", "c", "v", "b", "n", "m", backspace];
-
-function Modal({ creator, solution, setIsModelOpen, guess }) {
-  return (
-    <div className="z-10 inset-0 overflow-y-auto absolute top-32 flex justify-center items-start">
-      <div className="text-white space-y-8 text-center relative bg-[#121213] rounded-lg p-6 overflow-hidden shadow-xl transform transition-all sm:align-middle sm:max-w-sm sm:w-full">
-        {guess === solution ? (
-          <h3 className="text-3xl leading-6 font-bold">
-            You won!{" "}
-            <span role="img" aria-label="win" aria-hidden="false">
-              🎉
-            </span>{" "}
-          </h3>
-        ) : (
-          <h3 className="text-3xl leading-6 font-bold">
-            You lost!{" "}
-            <span role="img" aria-label="win" aria-hidden="false">
-              😢
-            </span>{" "}
-          </h3>
-        )}
-        <div>
-          {creator.charAt(0).toUpperCase() + creator.slice(1)}&apos;s word was{" "}
-          {solution.toUpperCase()}.
-        </div>
-        <button
-          onClick={() => setIsModelOpen(false)}
-          type="button"
-          className="absolute right-2 top-[-24px]"
-        >
-          <CircleXIcon className="hover:text-red-500" />
-        </button>
-        <div className="sm:flex sm:justify-center sm:space-x-2">
-          <a
-            href={window.location.href.replace(window.location.pathname, "/")}
-            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-correct text-base font-medium text-white sm:col-start-2 sm:text-sm"
-          >
-            Create a Word
-          </a>
-          <button
-            type="button"
-            className="flex bg-present items-center space-x-2 mt-3 w-full justify-center rounded-md border border-transparent shadow-sm px-4 py-2 font-medium text-white sm:mt-0 sm:col-start-1 sm:text-sm"
-          >
-            <span>Share</span>
-            <Share2Icon className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Row({ guess, isGuessEntered, solution }) {
   const tiles = [];
@@ -217,123 +169,13 @@ function PopUp({ setIsPopupOpen }) {
   );
 }
 
-function Guide({ setIsGuideOpen }) {
-  const example1 = ["w", "e", "a", "r", "y"];
-  const example2 = ["p", "i", "l", "l", "s"];
-  const example3 = ["v", "a", "g", "u", "e"];
-
-  return (
-    <div className="z-10 p-6 inset-0 overflow-y-auto absolute top-14 bg-white sm:max-w-3xl sm:mx-auto">
-      <button
-        type="button"
-        className="absolute right-2 top-0"
-        onClick={() => setIsGuideOpen(false)}
-      >
-        <CircleXIcon className="hover:text-red-500" />
-      </button>
-      <article>
-        <h2 className="font-bold text-2xl">How To Play</h2>
-        <p>Guess the wordle in 6 tries.</p>
-        <ul className="my-4 text-sm">
-          <li className="before:w-2 before:h-2 before:bg-black before:inline-block before:rounded-full before:mr-2">
-            Each guess must be a valid 5-letter word.
-          </li>
-          <li className="before:w-2 before:h-2 before:bg-black before:inline-block before:rounded-full before:mr-2">
-            The color of the tiles will change to show how close your guess was
-            to the word.
-          </li>
-        </ul>
-        <p className="font-semibold">Examples</p>
-        <div className="flex gap-1 mt-2">
-          {example1.map((char, idx) => {
-            if (char === "w") {
-              return (
-                <div
-                  className="w-8 h-8 border-2 border-correct bg-correct text-2xl flex justify-center items-center text-white font-bold uppercase"
-                  key={idx}
-                >
-                  {char}
-                </div>
-              );
-            }
-            return (
-              <div
-                className="w-8 h-8 border-2 border-[#878a8c] text-2xl flex justify-center items-center font-bold uppercase"
-                key={idx}
-              >
-                {char}
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-2">
-          <span className="uppercase font-bold">w</span> is in the word and in
-          the correct spot.
-        </p>
-        <div className="flex gap-1 mt-2">
-          {example2.map((char, idx) => {
-            if (char === "i") {
-              return (
-                <div
-                  className="w-8 h-8 border-2 border-present bg-present text-2xl flex justify-center items-center text-white font-bold uppercase"
-                  key={idx}
-                >
-                  {char}
-                </div>
-              );
-            }
-            return (
-              <div
-                className="w-8 h-8 border-2 border-[#878a8c] text-2xl flex justify-center items-center font-bold uppercase"
-                key={idx}
-              >
-                {char}
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-2">
-          <span className="uppercase font-bold">i</span> is in the word but in
-          the wrong spot.
-        </p>
-        <div className="flex gap-1 mt-2">
-          {example3.map((char, idx) => {
-            if (char === "u") {
-              return (
-                <div
-                  className="w-8 h-8 border-2 border-absent bg-absent text-2xl flex justify-center items-center text-white font-bold uppercase"
-                  key={idx}
-                >
-                  {char}
-                </div>
-              );
-            }
-            return (
-              <div
-                className="w-8 h-8 border-2 border-[#878a8c] text-2xl flex justify-center items-center font-bold uppercase"
-                key={idx}
-              >
-                {char}
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-2">
-          <span className="uppercase font-bold">u</span> is not in the word in
-          any spot.
-        </p>
-      </article>
-    </div>
-  );
-}
-
 function GamePage() {
   const [guesses, setGuesses] = useState(Array(6).fill(null));
   const [currentGuess, setCurrentGuess] = useState("");
   const [isGameOver, setIsGameOver] = useState(false);
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isHowToPlayModalOpen, setIsHowToPlayModalOpen] = useState(false);
 
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -397,7 +239,7 @@ function GamePage() {
           &apos;s 5 letter word!
         </p>
         <button
-          onClick={() => setIsGuideOpen(true)}
+          onClick={() => setIsHowToPlayModalOpen(true)}
           className="text-sm w-full mt-2 underline hover:text-gray-800 transition-colors"
         >
           How to play
@@ -417,7 +259,7 @@ function GamePage() {
           })}
         </div>
         {isModelOpen && (
-          <Modal
+          <GameOverModal
             creator={creator}
             solution={word}
             setIsModelOpen={setIsModelOpen}
@@ -436,7 +278,9 @@ function GamePage() {
           setIsModelOpen={setIsModelOpen}
         />
         {isPopupOpen && <PopUp setIsPopupOpen={setIsPopupOpen} />}
-        {isGuideOpen && <Guide setIsGuideOpen={setIsGuideOpen} />}
+        {isHowToPlayModalOpen && (
+          <HowToPlayModal setIsHowToPlayModalOpen={setIsHowToPlayModalOpen} />
+        )}
       </main>
     </>
   );
