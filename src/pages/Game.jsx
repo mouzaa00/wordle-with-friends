@@ -13,27 +13,58 @@ const ROW1 = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"];
 const ROW2 = ["a", "s", "d", "f", "g", "h", "j", "k", "l"];
 const ROW3 = ["Enter", "z", "x", "c", "v", "b", "n", "m", backspace];
 
-function Row({ guess, isGuessEntered, solution }) {
-  const tiles = [];
-  // when the guess is null or '', we still want to render the tiles with empty strings
-  for (let i = 0; i < WORD_LENGTH; i++) {
-    const char = guess[i];
-    let className = `w-12 h-12 border-2 ${
-      char ? "border-[#878a8c]" : "border-[#d3d6da]"
-    } text-2xl flex justify-center items-center uppercase font-bold`;
-    if (isGuessEntered) {
-      if (char === solution[i]) {
-        className = className + " text-white bg-correct border-correct";
-      } else if (solution.includes(char)) {
-        className = className + " text-white bg-present border-present";
-      } else {
-        className = className + " text-white bg-absent border-absent";
-      }
+function Tile({ char, solution, isFlipping, isGuessEntered, index }) {
+  const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (isFlipping) {
+      const timeout = setTimeout(() => setShowResult(true), index * 400 + 400);
+      return () => clearTimeout(timeout);
     }
+  }, [isFlipping, index]);
+
+  const shouldShowColor = isGuessEntered && (!isFlipping || showResult);
+
+  let className = `w-12 h-12 border-2 ${
+    char ? "border-[#878a8c]" : "border-[#d3d6da]"
+  } text-2xl flex justify-center items-center uppercase font-bold`;
+  if (shouldShowColor) {
+    if (char === solution[index]) {
+      className = className + " text-white bg-correct border-correct";
+    } else if (solution.includes(char)) {
+      className = className + " text-white bg-present border-present";
+    } else {
+      className = className + " text-white bg-absent border-absent";
+    }
+  }
+  if (isFlipping) {
+    className = className + ` tile-flip`;
+  }
+
+  return (
+    <div
+      className={className}
+      style={isFlipping ? { animationDelay: `${index * 0.4}s` } : undefined}
+    >
+      {char}
+    </div>
+  );
+}
+
+function Row({ guess, isGuessEntered, solution, submittedRow }) {
+  const isFlipping = submittedRow !== undefined && isGuessEntered;
+
+  const tiles = [];
+  for (let i = 0; i < WORD_LENGTH; i++) {
     tiles.push(
-      <div key={i} className={className}>
-        {char}
-      </div>,
+      <Tile
+        key={i}
+        char={guess[i]}
+        solution={solution}
+        isFlipping={isFlipping}
+        isGuessEntered={isGuessEntered}
+        index={i}
+      />,
     );
   }
 
@@ -50,6 +81,7 @@ function KeyboardLayout({
   setIsGameOver,
   setIsPopupOpen,
   setIsModelOpen,
+  setFlipRowIndex,
 }) {
   function handleClick(event) {
     if (isGameOver) return;
@@ -66,9 +98,11 @@ function KeyboardLayout({
         setIsPopupOpen(true);
         return;
       }
+      const currentRowIndex = guesses.findIndex((val) => val == null);
       const newGuesses = guesses;
-      newGuesses[guesses.findIndex((val) => val == null)] = currentGuess;
+      newGuesses[currentRowIndex] = currentGuess;
       setGuesses(newGuesses);
+      setFlipRowIndex(currentRowIndex);
 
       if (currentGuess === solution) {
         setIsGameOver(!isGameOver);
@@ -176,6 +210,7 @@ function GamePage() {
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isHowToPlayModalOpen, setIsHowToPlayModalOpen] = useState(false);
+  const [flipRowIndex, setFlipRowIndex] = useState(null);
 
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -195,9 +230,11 @@ function GamePage() {
           setIsPopupOpen(true);
           return;
         }
+        const currentRowIndex = guesses.findIndex((val) => val == null);
         const newGuesses = guesses;
-        newGuesses[guesses.findIndex((val) => val == null)] = currentGuess;
+        newGuesses[currentRowIndex] = currentGuess;
         setGuesses(newGuesses);
+        setFlipRowIndex(currentRowIndex);
         if (currentGuess === word) {
           setIsGameOver(true);
           setIsModelOpen(true);
@@ -254,6 +291,7 @@ function GamePage() {
                 guess={isCurrentGuess ? currentGuess : (guess ?? "")}
                 isGuessEntered={!isCurrentGuess && guess != null}
                 solution={word}
+                submittedRow={flipRowIndex === idx ? idx : undefined}
               />
             );
           })}
@@ -276,6 +314,7 @@ function GamePage() {
           solution={word}
           setIsPopupOpen={setIsPopupOpen}
           setIsModelOpen={setIsModelOpen}
+          setFlipRowIndex={setFlipRowIndex}
         />
         {isPopupOpen && <PopUp setIsPopupOpen={setIsPopupOpen} />}
         {isHowToPlayModalOpen && (
