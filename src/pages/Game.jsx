@@ -250,6 +250,8 @@ function GamePage() {
       }
 
       if (
+        event.ctrlKey ||
+        event.metaKey ||
         event.key.length !== 1 ||
         event.key.charCodeAt(0) < 97 ||
         event.key.charCodeAt(0) > 122
