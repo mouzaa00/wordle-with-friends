@@ -15,6 +15,6 @@ export function decryptGameData(token) {
   const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
   const decrypted = CryptoJS.AES.decrypt(base64, SECRET_KEY);
   const text = decrypted.toString(CryptoJS.enc.Utf8);
-  const [word, creator] = text.split("|");
-  return { word, creator };
+  const [solution, creator] = text.split("|");
+  return { solution, creator };
 }

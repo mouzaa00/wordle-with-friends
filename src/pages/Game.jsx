@@ -82,6 +82,8 @@ function KeyboardLayout({
   setIsPopupOpen,
   setIsModelOpen,
   setFlipRowIndex,
+  checkedLetters,
+  setCheckedLetters,
 }) {
   function handleClick(event) {
     if (isGameOver) return;
@@ -103,6 +105,22 @@ function KeyboardLayout({
       newGuesses[currentRowIndex] = currentGuess;
       setGuesses(newGuesses);
       setFlipRowIndex(currentRowIndex);
+      setCheckedLetters((prev) => {
+        const newCheckedLetters = { ...prev };
+        for (let i = 0; i < currentGuess.length; i++) {
+          const char = currentGuess[i];
+          if (char === solution[i]) {
+            newCheckedLetters[char] = "bg-correct border-correct text-white";
+          } else if (solution.includes(char)) {
+            if (newCheckedLetters[char] !== "correct") {
+              newCheckedLetters[char] = "bg-present border-present text-white";
+            }
+          } else {
+            newCheckedLetters[char] = "bg-absent border-absent text-white";
+          }
+        }
+        return newCheckedLetters;
+      });
 
       if (currentGuess === solution) {
         setIsGameOver(!isGameOver);
@@ -128,7 +146,7 @@ function KeyboardLayout({
       <div className="flex justify-center items-center gap-1">
         {ROW1.map((element, idx) => (
           <button
-            className="bg-gray-300 text-sm w-8 h-12  rounded uppercase font-bold"
+            className={`${checkedLetters[element] || "bg-gray-300"} text-sm w-8 h-12  rounded uppercase font-bold`}
             key={idx}
             onClick={handleClick}
           >
@@ -139,7 +157,7 @@ function KeyboardLayout({
       <div className="flex justify-center items-center gap-1">
         {ROW2.map((element, idx) => (
           <button
-            className="bg-gray-300 text-sm w-8 h-12  rounded uppercase font-bold"
+            className={`${checkedLetters[element] || "bg-gray-300"} text-sm w-8 h-12 rounded uppercase font-bold`}
             key={idx}
             onClick={handleClick}
           >
@@ -173,7 +191,7 @@ function KeyboardLayout({
           }
           return (
             <button
-              className="bg-gray-300 text-sm w-8 h-12  rounded uppercase font-bold"
+              className={`${checkedLetters[element] || "bg-gray-300"} text-sm w-8 h-12 rounded uppercase font-bold`}
               key={idx}
               onClick={handleClick}
             >
@@ -211,10 +229,11 @@ function GamePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isHowToPlayModalOpen, setIsHowToPlayModalOpen] = useState(false);
   const [flipRowIndex, setFlipRowIndex] = useState(null);
+  const [checkedLetters, setCheckedLetters] = useState({});
 
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-  const { word, creator } = decryptGameData(token);
+  const { solution, creator } = decryptGameData(token);
 
   useEffect(() => {
     function handleType(event) {
@@ -235,7 +254,24 @@ function GamePage() {
         newGuesses[currentRowIndex] = currentGuess;
         setGuesses(newGuesses);
         setFlipRowIndex(currentRowIndex);
-        if (currentGuess === word) {
+        setCheckedLetters((prev) => {
+          const newCheckedLetters = { ...prev };
+          for (let i = 0; i < currentGuess.length; i++) {
+            const char = currentGuess[i];
+            if (char === solution[i]) {
+              newCheckedLetters[char] = "bg-correct border-correct text-white";
+            } else if (solution.includes(char)) {
+              if (newCheckedLetters[char] !== "correct") {
+                newCheckedLetters[char] =
+                  "bg-present border-present text-white";
+              }
+            } else {
+              newCheckedLetters[char] = "bg-absent border-absent text-white";
+            }
+          }
+          return newCheckedLetters;
+        });
+        if (currentGuess === solution) {
           setIsGameOver(true);
           setIsModelOpen(true);
           setCurrentGuess("");
@@ -266,7 +302,7 @@ function GamePage() {
     window.addEventListener("keydown", handleType);
 
     return () => window.removeEventListener("keydown", handleType);
-  }, [currentGuess, guesses, isGameOver, word]);
+  }, [currentGuess, guesses, isGameOver, solution]);
 
   return (
     <>
@@ -275,7 +311,7 @@ function GamePage() {
         <p className="text-sm text-center">
           You have 6 tries to guess{" "}
           {creator.charAt(0).toUpperCase() + creator.slice(1)}
-          &apos;s 5 letter word!
+          &apos;s 5-letter word!
         </p>
         <button
           onClick={() => setIsHowToPlayModalOpen(true)}
@@ -292,7 +328,7 @@ function GamePage() {
                 key={idx}
                 guess={isCurrentGuess ? currentGuess : (guess ?? "")}
                 isGuessEntered={!isCurrentGuess && guess != null}
-                solution={word}
+                solution={solution}
                 submittedRow={flipRowIndex === idx ? idx : undefined}
               />
             );
@@ -301,7 +337,7 @@ function GamePage() {
         {isModelOpen && (
           <GameOverModal
             creator={creator}
-            solution={word}
+            solution={solution}
             setIsModelOpen={setIsModelOpen}
             guess={guesses[guesses.findIndex((val) => val == null) - 1]}
           />
@@ -313,10 +349,12 @@ function GamePage() {
           setGuesses={setGuesses}
           isGameOver={isGameOver}
           setIsGameOver={setIsGameOver}
-          solution={word}
+          solution={solution}
           setIsPopupOpen={setIsPopupOpen}
           setIsModelOpen={setIsModelOpen}
           setFlipRowIndex={setFlipRowIndex}
+          checkedLetters={checkedLetters}
+          setCheckedLetters={setCheckedLetters}
         />
         {isPopupOpen && <PopUp setIsPopupOpen={setIsPopupOpen} />}
         {isHowToPlayModalOpen && (
