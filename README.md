@@ -1,10 +1,16 @@
 # Wordle With friends
 
-## Todo
+Play the popular wordle game with your friend, but you choose the word that they should solve!
 
-- [x] create a grid 5x6 boxes where you add letters
-- [x] ability to input letter inside the box
-- [x] after entering a word the bg should be the right color for every state
-- [x] enter a word and generate a link
-- [x] display the board when entering the copied link
-- [x] bug: after closing the model the answer shouldn't be display in the next guess spot and all the guesses must be stored in local storage so that the user can't lose his the progress after refreshing.
+## Motivation
+
+I was frustrated that my friends and I couldn't play Wordle whenever we wanted. We had to wait 24 hours for a new word, and sometimes the answer would get spoiled, ruining the fun. To solve this, I built **Wordle with Friends**, a small web app where you can create your own Wordle challenge by entering a word and generating a shareable link to send to your friends.
+
+## 🚀 Quick Start
+
+1. Navigate to [Wordle with Friends](https://wordle-with-friends-alpha.vercel.app/)
+2. Enter a 5-letter word, and share the link with your friends
+
+## Contributing
+
+We are not accepting contributions.
